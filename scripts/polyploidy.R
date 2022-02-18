@@ -1,10 +1,10 @@
 #!~/anaconda3/envs/JupyteR4/bin/Rscript
 args = commandArgs(trailingOnly=TRUE)
 
-source("../BrusselSprouts/scripts/functions.R")
+source("~/BrusselSprouts/scripts/functions.R")
 
 
-example=fread(args[1], data.table=FALSE, fill=TRUE)
+example=fread(cmd=paste("zcat AD/header.AD.csv.gz ",args[1],sep=""), data.table=FALSE, fill=TRUE)
 for(i in 1:ncol(example)){
     example[,i]=as.numeric(example[,i])
 }
@@ -22,4 +22,4 @@ polyploidy_signal_fraction=sum(((AF_df$AF1> 0.1 & AF_df$AF1 < 0.4) | (AF_df$AF1<
     ((AF_df$AF3> 0.1 & AF_df$AF3 < 0.4) | (AF_df$AF3< 0.9 & AF_df$AF3>0.6)) |
     ((AF_df$AF4> 0.1 & AF_df$AF4 < 0.4) | (AF_df$AF4< 0.9 & AF_df$AF4>0.6)),na.rm = TRUE)/nrow(AF_df)
 
-writeLines(polyploidy_signal_fraction,args[2])
+writeLines(as.character(polyploidy_signal_fraction),args[2])
