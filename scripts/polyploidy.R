@@ -4,7 +4,7 @@ args = commandArgs(trailingOnly=TRUE)
 source("~/BrusselSprouts/scripts/functions.R")
 
 
-example=fread(cmd=paste("zcat AD/header.AD.csv.gz ",args[1],sep=""), data.table=FALSE, fill=TRUE)
+example=fread(cmd=paste("zcat /home/jnrunge/data/TRD/AD/header.AD.csv.gz ",args[1],sep=""), data.table=FALSE, fill=TRUE)
 for(i in 1:ncol(example)){
     example[,i]=as.numeric(example[,i])
 }
