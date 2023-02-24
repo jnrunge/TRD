@@ -2,9 +2,9 @@
 
 touch ~/data/TRD/Oppo-Homo-Pos/$3.running
 
-bcftools view -V indels,mnps,other -s $1 ~/data/trd/full2489Matrix.vcf.gz | bcftools norm -f /home/jnrunge/data/TRD/R64_nucl.fasta | bcftools view -i 'F_MISSING==0 & GT[0] == "hom" & GQ >=30 && FMT/DP >= 20' | bcftools view -e 'type!="snp"' | grep -v ^# | cut -f 1,2 > ~/data/TRD/Oppo-Homo-Pos/$1.loci
+bcftools view -V indels,mnps,other -s $1 ~/data/trd/full2489Matrix.vcf.gz | bcftools view -i 'F_MISSING==0 & GT[0] == "hom" & GQ >=30 && FMT/DP >= 20' | bcftools view -e 'type!="snp"' | grep -v ^# | cut -f 1,2 > ~/data/TRD/Oppo-Homo-Pos/$1.loci
 
-bcftools view -V indels,mnps,other -s $2 ~/data/trd/full2489Matrix.vcf.gz | bcftools norm -f /home/jnrunge/data/TRD/R64_nucl.fasta | bcftools view -i 'F_MISSING==0 & GT[0] == "hom" & GQ >=30 && FMT/DP >= 20' | bcftools view -e 'type!="snp"' | grep -v ^# | cut -f 1,2 > ~/data/TRD/Oppo-Homo-Pos/$2.loci
+bcftools view -V indels,mnps,other -s $2 ~/data/trd/full2489Matrix.vcf.gz | bcftools view -i 'F_MISSING==0 & GT[0] == "hom" & GQ >=30 && FMT/DP >= 20' | bcftools view -e 'type!="snp"' | grep -v ^# | cut -f 1,2 > ~/data/TRD/Oppo-Homo-Pos/$2.loci
 
 . ~/activate.sh fixR
 
