@@ -1,0 +1,2 @@
+cd ~/data/trd/mapped_reads
+bcftools view -s $1 -e 'type!="snp"' TRD.vcf.gz | bcftools view -i "FMT/GT == 'hom' & FMT/GQ >= 30 & FMT/DP >= 30" | bcftools query -f "%CHROM\t%POS\t%REF,%ALT\t[%GT]\n" | gzip > $1.homLoci.gz

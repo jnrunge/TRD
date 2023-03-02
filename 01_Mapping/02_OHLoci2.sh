@@ -1,0 +1,2 @@
+cd ~/data/trd/mapped_reads
+bcftools view -s $1 -e 'type!="snp"' TRD.vcf.gz | bcftools view -i "MAX(FMT/AD) != FMT/DP & FMT/DP >= 10" | bcftools query -f "%CHROM\t%POS\t%REF,%ALT\t[%AD]\n" | gzip > $1.hetLoci.gz
