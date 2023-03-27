@@ -1,9 +1,9 @@
 # here I should just input from,to , and whether that is a square or from here until end
 library(data.table)
-args=c("~/OneDrive - unistra.fr/TRD/PhenotypingDiploidy/20221115/gitter/Cross_05.JPG.dat",
-       "6,11", # col, row, from
-       "6,12", # col, row, to
-       "region") # range or region or pos (just 'from' field)
+args=c("~/OneDrive - unistra.fr/TRD/PhenotypingDiploidy/20221205/gitter/Cross_18.JPG.dat",
+       "17,6", # col, row, from
+       "24,16", # col, row, to
+       "range") # range or region or pos (just 'from' field)
 
 file=args[1]
 
