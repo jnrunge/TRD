@@ -1,5 +1,6 @@
 *checkpoints*
 *out
 .DS_Store
-Shiny/data/ChrisC1-AF.csv.gz.loci.full.vcf.gz
+*.vcf.gz
 Shiny/data/Victor/full2543Matrix.DP10.GQ20.SNPs.99pNonMiss.Biallelic.IDset.vcf.gz.swapped.newick
+Shiny/data/Victor/operationalTable2543Sace_withCountry_MexAgave.csv
