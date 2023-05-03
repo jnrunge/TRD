@@ -1,0 +1,1 @@
+samtools depth -aa $1 | gzip > $1.depth.gz

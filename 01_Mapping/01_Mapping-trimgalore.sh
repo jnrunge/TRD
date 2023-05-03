@@ -1,0 +1,1 @@
+trim_galore --paired -o trim_galore -j 10 $(sed ':a;N;$!ba;s/\n/ /g' ~/data/trd/my_sequences/files.txt)
