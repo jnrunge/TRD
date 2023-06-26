@@ -10,6 +10,8 @@ setDF(vcf)
 vcf$chrpos=paste(vcf$`#CHROM`,vcf$POS)
 df$chrpos=paste(df$chr,df$pos)
 
+vcf=subset(vcf, chrpos %in% df$chrpos)
+
 getA1A2sharersPerLocus=function(x){
     if(vcf$chrpos[x]%in%df$chrpos){
         which_df_row=which(df$chrpos==vcf$chrpos[x])

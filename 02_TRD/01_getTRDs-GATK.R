@@ -202,7 +202,9 @@ chr_summary <- summarise(group_by(OH_vs_cross, chr), meanAF = mean(AD_A1 / sumCo
 
 loessMod50 <- loess((AD_A1 / sumCount) ~ global_pos, data = OH_vs_cross, span = 0.01)
 split_pred <- round(seq(from = 1, to = nrow(OH_vs_cross), length.out = round(nrow(OH_vs_cross) / 10000)))
-
+if(length(split_pred)==1){
+    split_pred<-c(1,nrow(OH_vs_cross))
+}
 # large prediction data (w/ SE calc) crashes predict.loess, so we do it per 10000 loci
 
 for (k in 1:length(split_pred)) {

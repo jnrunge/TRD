@@ -4,3 +4,5 @@
 *.vcf.gz
 Shiny/data/Victor/full2543Matrix.DP10.GQ20.SNPs.99pNonMiss.Biallelic.IDset.vcf.gz.swapped.newick
 Shiny/data/Victor/operationalTable2543Sace_withCountry_MexAgave.csv
+ceberlein_data
+figures
