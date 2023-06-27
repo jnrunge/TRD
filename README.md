@@ -1,4 +1,4 @@
-# Transmission ratio distortion in species-wide crosses of ye
+# Transmission ratio distortion in species-wide crosses of yeast
 
 In this project, I am taking information that was available to me about *S. cerevisiae* yeast, based on genotypes and other data, to select which yeasts I want to cross <00_SelectCrosses>. 
 
