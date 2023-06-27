@@ -1,4 +1,3 @@
-#!~/anaconda3/envs/JupyteR4/bin/Rscript
 args = commandArgs(trailingOnly=TRUE)
 
 source("~/BrusselSprouts/scripts/functions.R")
