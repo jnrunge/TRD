@@ -57,7 +57,7 @@ dissMatrix_rng <- snpgdsDiss(genofile, snp.id=snpset, num.thread = 1)
     colnames(dissMatrix_rng$diss) <- dissMatrix_rng$sample.id
     tr <- bionjs(dissMatrix_rng$diss)
 
-    tr_dist<-ape::cophenetic.phylo(tr)
+    #tr_dist<-ape::cophenetic.phylo(tr)
 
 print("Locking output file.")
 local_phylogeny_output_file_lock<-flock::lock(local_phylogeny_output_file)
@@ -74,7 +74,7 @@ if(file.size(local_phylogeny_output_file) == 0){
     local_phylogeny_data[["PCA_distances_from_0"]]<-PCA_distances_from_0
     local_phylogeny_data[["IBS_MDS_distances_from_0"]]<-IBS_MDS_distances_from_0
     local_phylogeny_data[["rng_trees"]]<-rng_trees
-    local_phylogeny_data[["rng_tree_distances"]]<-rng_tree_distances
+    #local_phylogeny_data[["rng_tree_distances"]]<-rng_tree_distances
     
 
 }else{
@@ -85,7 +85,7 @@ if(file.size(local_phylogeny_output_file) == 0){
 local_phylogeny_data[["PCA_distances_from_0"]][[as.character(i)]]<-euclidean_distance(x_pca,y_pca)
 local_phylogeny_data[["IBS_MDS_distances_from_0"]][[as.character(i)]]<-euclidean_distance(x_ibs,y_ibs)
 local_phylogeny_data[["rng_trees"]][[as.character(i)]]<-tr
-local_phylogeny_data[["rng_tree_distances"]][[as.character(i)]]<-tr_dist
+#local_phylogeny_data[["rng_tree_distances"]][[as.character(i)]]<-tr_dist
 
 saveRDS(local_phylogeny_data, file=local_phylogeny_output_file)
 
