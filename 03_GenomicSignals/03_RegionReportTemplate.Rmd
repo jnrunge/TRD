@@ -1,0 +1,228 @@
+---
+title: "`r cross`"
+output: html_document
+---
+
+## Introduction
+
+This is a report on TRD analyses of cross `r cross`.
+
+````{r}
+# get the data
+
+library(tidytable)
+library(ggplot2)
+library(naturalsort)
+library(scales)
+library(stringr)
+
+AF_across_genome<-fread(paste0("~/data/TRD/results/shiny/", cross, "-AF.csv.gz"))
+
+TRD_regions<-fread(paste0("~/data/TRD/results/shiny/", cross, "-TRD_regions.csv.gz"))
+
+
+
+````
+
+# The two parents
+
+````{r}
+
+# load the Excel crosses file
+
+crosses_xlsx=readxl::read_xlsx("~/data/trd/Crosses.xlsx", sheet=2)
+cc=data.frame("Cross ID"=c(paste0("ChrisC",1:8)),
+                                  "Short name 1"=c("ACP","BAP","CCD","ATE","ACK","AKE","BAH","ANG"),
+                                  "Short name 2"=c("BFP","CMP","CPG","SACE_YCR","ACV","BAH","CGD","CEI"), stringsAsFactors=FALSE)
+colnames(cc)=str_replace_all(colnames(cc), fixed("."), " ")
+crosses_all <- bind_rows(crosses_xlsx[,c("Cross ID","Short name 1","Short name 2")],
+                        cc)
+                        
+crosses_all_slice<-filter(crosses_all, `Cross ID` == cross)
+strain_1<-pull(crosses_all_slice, `Short name 1`)
+strain_2<-pull(crosses_all_slice, `Short name 2`)
+
+count_segregants<-NA
+
+if(cross %in% pull(crosses_xlsx, `Cross ID`)){
+    count_segregants<-filter(crosses_xlsx, `Cross ID` == cross)%>%
+                    pull(`Colonies in pool`)
+}
+
+# load the Victor clusters
+
+df_Strains<-fread("~/TRD/Shiny/data/Victor/operationalTable_Full2543Sace_Clades.csv")
+
+cluster_1<-filter(df_Strains, StandardizedName == strain_1)%>%pull(Clade)
+cluster_2<-filter(df_Strains, StandardizedName == strain_2)%>%pull(Clade)
+
+# load the ASD
+
+ASD_comparisons<-fread("~/data/TRD/comparisons.csv")
+ASD_value<-filter(ASD_comparisons, (row==strain_1 & col == strain_2) |
+                                    (row==strain_2 & col==strain_1))%>%
+                                    pull(dist)
+ASD_value<-unique(ASD_value)
+
+ASD_translated_value<-ASD_value*(1554384/12000000)
+ASD_translated_value<-round(ASD_translated_value*100,2)
+
+````
+
+Cross `r cross` was done between `r strain_1` (`r cluster_1`) and `r strain_2` (`r cluster_2`). I managed to pool `r count_segregants`. 
+
+The parental strains had an allele sharing distance of `r ASD_value`, which I think should translate into `r paste0(ASD_translated_value,"%")` distance between the genomes.
+
+
+# TRD across genome
+
+````{r}
+
+# code below from TRD/02_TRD/01_getTRDs-GATK.R
+
+chrs <- summarise(group_by(AF_across_genome, chr), maxpos = max(pos))
+chrs <- chrs[naturalorder(chrs$chr), ]
+chrs$global_pos <- cumsum(chrs$maxpos)
+
+p<-ggplot(AF_across_genome, aes(global_pos, AD_A1 / sumCount)) +
+  geom_point(alpha = 0.1, color = "grey") +
+  geom_line(mapping = aes(global_pos, smoothed, color = abs(0.5 - smoothed)), inherit.aes = FALSE, linewidth = 2) +
+  scale_color_viridis_c(option = "A", limits = c(0, 0.5)) +
+  ylim(c(0, 1)) +
+  geom_hline(yintercept = 0.5) +
+  geom_vline(xintercept = chrs$global_pos) +
+  geom_vline(xintercept=c(pull(TRD_regions,global_start),pull(TRD_regions,global_end)), color="red", linetype=2, alpha=0.5)+
+  theme_bw(16) +
+  ylab("Allele Frequency") +
+  xlab("POS") +
+  theme(legend.position = "none") +
+  # geom_hline(yintercept = c(0.4,0.6))+
+  ggtitle(cross) +
+  labs(alpha = "Coverage") +
+  scale_x_continuous(labels = comma)
+  
+TRD_regions<-mutate(TRD_regions,
+                    length90=NA,
+                    length80=NA,
+                    length70=NA,
+                    length60=NA,
+                    maxStrength=NA)
+                    
+for(i in 1:nrow(TRD_regions)){
+    TRD_regions_slice<-slice(TRD_regions, i)
+    AF_across_genome_here<-filter(AF_across_genome, chr==pull(TRD_regions_slice, chr_start) & global_pos >= pull(TRD_regions_slice, global_start) & global_pos <= pull(TRD_regions_slice, global_end))
+    
+    TRD_regions<-mutate(TRD_regions,
+                        length90=ifelse(ID==pull(TRD_regions_slice,ID),sum((pull(AF_across_genome_here,AD_A1)/pull(AF_across_genome_here,sumCount))>=0.9 | 
+                        (pull(AF_across_genome_here,AD_A1)/pull(AF_across_genome_here,sumCount))<= 0.1),length90),
+                        length80=ifelse(ID==pull(TRD_regions_slice,ID),sum((pull(AF_across_genome_here,AD_A1)/pull(AF_across_genome_here,sumCount))>=0.8 | 
+                        (pull(AF_across_genome_here,AD_A1)/pull(AF_across_genome_here,sumCount))<= 0.2),length80),
+                        length70=ifelse(ID==pull(TRD_regions_slice,ID),sum((pull(AF_across_genome_here,AD_A1)/pull(AF_across_genome_here,sumCount))>=0.7 | 
+                        (pull(AF_across_genome_here,AD_A1)/pull(AF_across_genome_here,sumCount))<= 0.3),length70),
+                        length60=ifelse(ID==pull(TRD_regions_slice,ID),sum((pull(AF_across_genome_here,AD_A1)/pull(AF_across_genome_here,sumCount))>=0.6 | 
+                        (pull(AF_across_genome_here,AD_A1)/pull(AF_across_genome_here,sumCount))<= 0.4),length60),
+              maxStrength=ifelse(ID==pull(TRD_regions_slice,ID),ifelse(max(pull(AF_across_genome_here,AD_A1)/pull(AF_across_genome_here,sumCount))>max(pull(AF_across_genome_here,AD_A2)/pull(AF_across_genome_here,sumCount)),
+                        max((pull(AF_across_genome_here,AD_A1)/pull(AF_across_genome_here,sumCount))),max((pull(AF_across_genome_here,AD_A2)/pull(AF_across_genome_here,sumCount)))),maxStrength))
+}
+  
+````
+
+````{r}
+
+p
+
+````
+
+## List of TRD regions
+
+The order is the same as highlighted in the plot above. IDs don't necessarily increase continuously.
+
+````{r} 
+
+library(reactable)
+
+reactable(select(TRD_regions, ID, lengthSNPs, length90,
+                    length80,
+                    length70,
+                    length60, lengthBp, 
+                    maxStrength, chr_start, chr_end, global_start, global_end))
+
+````
+
+# Structural variants
+
+````{r}
+
+sv_plots_files<-paste0("~/data/trd/SV_analysis/",cross,".",c("sv_victor",
+"syri_1","syri_2","mash1","mash2"),".RDS")
+
+get_plots_if_they_exist<-function(x){
+    if(file.exists(x)){
+        return(readRDS(x))
+    }else{
+        return(NA)
+    }
+}
+
+sv_plots<-lapply(sv_plots_files, get_plots_if_they_exist)
+names(sv_plots)<-c("sv_victor",
+"syri_1","syri_2","mash1","mash2")
+
+
+
+````
+
+## Victor's called SVs between parental strains
+
+It is worth noting here that the sizes of SVs can be quite different between the parental strains and what has been merged on a population-level and is then shown here. Later, I will show quickly called SVs just between the two respective assemblies that one can then compare visually.
+
+"TRD" regions added as well.
+
+````{r fig.height=8} 
+sv_plots[["sv_victor"]]+theme_bw(12)
+````
+
+## Re-called SVs using `syri`
+
+I called SVs then between the two respective assemblies. Here I will show two plots, one from the "perspective" of parent 1 and one from parent 2 (i.e. with their coordinates on their chromosomes). Note: The chromosomes were ordered naturally, but since some are concatenated (due to translocations likely), ordering could be less-than-perfect.
+
+````{r fig.height=8} 
+sv_plots[["syri_1"]]+theme_bw(12)+ylab("TYPE")+labs(color="TYPE")
+````
+
+````{r fig.height=8} 
+sv_plots[["syri_2"]]+theme_bw(12)+ylab("TYPE")+labs(color="TYPE")
+````
+
+## Dotplots
+
+To help us understand some SVs better, I also produced dotplots, from both parents perspectives.
+
+````{r fig.height=8} 
+sv_plots[["mash1"]]+theme_bw(12)
+````
+
+````{r fig.height=8} 
+sv_plots[["mash2"]]+theme_bw(12)
+````
+
+
+- Summary per TRD of % overlaps
+
+````{r}
+
+SV_data<-readRDS(paste0("/home/jnrunge/data/trd/SV_analysis/",cross,
+                    ".SV_data.RDS"))
+                    
+                    
+reactable(SV_data%>%filter(!is.na(TYPE))%>%
+group_by(cross,ID,TYPE,source)%>%summarize(sum_LEN_rel=sum(LEN_rel),
+sum_LEN=sum(LEN)))
+
+````
+
+# Local phylogeny
+
+- Plots
+
+- Summary
