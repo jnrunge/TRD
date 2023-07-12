@@ -1,9 +1,11 @@
 ---
 title: "`r cross`"
-output: html_document
+output: 
+    rmdformats::html_clean:
+        use_bookdown: TRUE
+        lightbox: TRUE
+        gallery: TRUE
 ---
-
-## Introduction
 
 This is a report on TRD analyses of cross `r cross`.
 
@@ -217,12 +219,83 @@ SV_data<-readRDS(paste0("/home/jnrunge/data/trd/SV_analysis/",cross,
                     
 reactable(SV_data%>%filter(!is.na(TYPE))%>%
 group_by(cross,ID,TYPE,source)%>%summarize(sum_LEN_rel=sum(LEN_rel),
-sum_LEN=sum(LEN)))
+sum_LEN=sum(LEN))%>%arrange(-sum_LEN))
 
 ````
 
 # Local phylogeny
 
+- Summary
+
+````{r}
+
+LP_data<-fread("/home/jnrunge/data/trd/local_phylogenies_trd_analysis/TRD_regions_with_LP_data.csv.gz")
+
+cross_val<-cross
+
+LP_data<-filter(LP_data,cross==cross_val)%>%select(ID,PCA_eucldist_quantile_1,PCA_eucldist_sd_multiplier_1,IBS_eucldist_quantile_1,IBS_eucldist_sd_multiplier_1,tree_changes_quantile,tree_changes_sd_multiplier,PCA_eucldist_quantile_2,PCA_eucldist_sd_multiplier_2,IBS_eucldist_quantile_2,IBS_eucldist_sd_multiplier_2)
+
+LP_data<-pivot_longer(LP_data, -ID)
+
+LP_data<-mutate(LP_data, value=round(value,2), abs=round(abs(value),2))
+
+reactable(LP_data%>%arrange(-abs))
+
+````
+
 - Plots
 
-- Summary
+## PCA / IBS-MDS
+
+First, we can visualize the PCA and IBS-MDS of the TRD region across the 2.5K strains, highlighting the two crossed strains, blue for strain 1 and red for strain 2 (referring to up and down in the TRD plot).
+
+````{r, results="asis"}
+for(id in pull(TRD_regions, ID)){
+
+    cat("### TRD region ",id, "  ")
+    cat("\n") 
+print(readRDS(paste0("~/data/trd/local_phylogenies_trd_analysis/",
+                cross,".",id,".","PCA",".RDS")))
+              cat("\n")   
+print(readRDS(paste0("~/data/trd/local_phylogenies_trd_analysis/",
+                cross,".",id,".","IBS MDS",".RDS")))
+                cat("\n\n")   
+}
+
+
+````
+
+## Distance plots
+
+Next, we want to quantify how much the TRD regions are more or less distant to other strains in the PCA / IBS-MDS above compared to the rest of the strains's genomes.
+
+The red lines indicate the distance to the midpoint in the PCA or IBS-MDS of the TRD region, i.e. how different the strain's region is compared to the average in the 2.5K dataset. To put it into perspective, 10,000 random 50 kB regions were drawn and the focal strain's distance to the mean was taken for those as well. These random regions form the histogram in the background. The blue line shows a normal distribution of the same mean and sd as the random values. Hence, a strongly shifted red lined (shifted from median in the histogram and/or mean in the blue line) would indicate a particularly average (low value) or particularly distance (high value) TRD region.
+
+````{r, results="asis"}
+for(id in pull(TRD_regions, ID)){
+
+    cat("### TRD region ",id, " in strain 1, ", strain_1, "  ")
+    cat("\n") 
+print(readRDS(paste0("~/data/trd/local_phylogenies_trd_analysis/",
+                cross,".",id,".",strain_1,".","PCA",".RDS")))
+              cat("\n")   
+print(readRDS(paste0("~/data/trd/local_phylogenies_trd_analysis/",
+                cross,".",id,".",strain_1,".","IBS",".RDS")))
+                cat("\n\n")   
+                
+                cat("### TRD region ",id, " in strain 2, ", strain_2, "  ")
+    cat("\n") 
+print(readRDS(paste0("~/data/trd/local_phylogenies_trd_analysis/",
+                cross,".",id,".",strain_2,".","PCA",".RDS")))
+              cat("\n")   
+print(readRDS(paste0("~/data/trd/local_phylogenies_trd_analysis/",
+                cross,".",id,".",strain_2,".","IBS",".RDS")))
+                cat("\n\n")   
+}
+
+
+````
+
+## Changes in the local phylogeny
+
+- needs to be re-analyzed as basically all TRD regions were low outliers, implying that the 50 kB region size of the random regions determined more changes than the often larger TRD regions.
