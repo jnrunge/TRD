@@ -180,7 +180,7 @@ It is worth noting here that the sizes of SVs can be quite different between the
 
 "TRD" regions added as well.
 
-````{r fig.height=8} 
+````{r, fig.height=8, eval=!is.na(sv_plots[["sv_victor"]])} 
 sv_plots[["sv_victor"]]+theme_bw(12)
 ````
 
@@ -188,11 +188,11 @@ sv_plots[["sv_victor"]]+theme_bw(12)
 
 I called SVs then between the two respective assemblies. Here I will show two plots, one from the "perspective" of parent 1 and one from parent 2 (i.e. with their coordinates on their chromosomes). Note: The chromosomes were ordered naturally, but since some are concatenated (due to translocations likely), ordering could be less-than-perfect.
 
-````{r fig.height=8} 
+````{r, fig.height=8, eval=!is.na(sv_plots[["syri_1"]])} 
 sv_plots[["syri_1"]]+theme_bw(12)+ylab("TYPE")+labs(color="TYPE")
 ````
 
-````{r fig.height=8} 
+````{r, fig.height=8, eval=!is.na(sv_plots[["syri_2"]])} 
 sv_plots[["syri_2"]]+theme_bw(12)+ylab("TYPE")+labs(color="TYPE")
 ````
 
@@ -200,18 +200,18 @@ sv_plots[["syri_2"]]+theme_bw(12)+ylab("TYPE")+labs(color="TYPE")
 
 To help us understand some SVs better, I also produced dotplots, from both parents perspectives.
 
-````{r fig.height=8} 
+````{r, fig.height=8, eval=!is.na(sv_plots[["mash1"]])} 
 sv_plots[["mash1"]]+theme_bw(12)
 ````
 
-````{r fig.height=8} 
+````{r, fig.height=8, eval=!is.na(sv_plots[["mash2"]])} 
 sv_plots[["mash2"]]+theme_bw(12)
 ````
 
 
 - Summary per TRD of % overlaps
 
-````{r}
+````{r, eval=file.exists(paste0("/home/jnrunge/data/trd/SV_analysis/",cross,".SV_data.RDS"))}
 
 SV_data<-readRDS(paste0("/home/jnrunge/data/trd/SV_analysis/",cross,
                     ".SV_data.RDS"))
