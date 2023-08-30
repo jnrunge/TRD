@@ -1,0 +1,52 @@
+---
+title: Widespread transmission ratio distortion in species-wide crosses of *Saccharomyces cerevisiae*
+author: Jan-Niklas Runge
+format:
+  html:
+    code-fold: true
+    toc: true
+execute:
+  enabled: true
+warning: false
+filters:
+  - lightbox
+lightbox: auto
+jupyter: ir
+---
+
+```{r}
+#| include: false
+#| tags: []
+library(tidyverse)
+library(readxl)
+```
+
+# Results
+
+## Transmission distortion is common
+
+```{r}
+#| tags: []
+# load the manual overview of the crosses in Excel format
+Crosses_xlsx<-read_xlsx("~/data/trd/Crosses.xlsx", sheet=2) # should be moved to the github
+mean_colonies<-summarize(Crosses_xlsx, mean(`Colonies in pool`, na.rm=TRUE))%>%pull()
+sd_colonies<-summarize(Crosses_xlsx, sd(`Colonies in pool`, na.rm=TRUE))%>%pull()
+```
+
+```{r}
+#| output: asis
+#| echo: false
+#| tags: []
+cat("We conducted 34 crosses, of which 30 were succesful, with on average",round(mean_colonies),"$\\pm$",round(sd_colonies), "(SD) colonies retreived per cross.\n")
+```
+
+```{r}
+#| label: fig-colonies
+#| fig-cap: Distribution of the number of colonies that were retrieved per cross
+#| tags: []
+
+ggplot(Crosses_xlsx, aes(`Colonies in pool`))+
+geom_histogram()+theme_bw(20)
+```
+
+

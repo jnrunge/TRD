@@ -251,7 +251,10 @@ First, we can visualize the PCA and IBS-MDS of the TRD region across the 2.5K st
 
 ````{r, results="asis"}
 for(id in pull(TRD_regions, ID)){
-
+    if(!file.exists(paste0("~/data/trd/local_phylogenies_trd_analysis/",
+                cross,".",id,".","PCA",".RDS"))){
+                next
+                }
     cat("### TRD region ",id, "  ")
     cat("\n") 
 print(readRDS(paste0("~/data/trd/local_phylogenies_trd_analysis/",
@@ -273,7 +276,10 @@ The red lines indicate the distance to the midpoint in the PCA or IBS-MDS of the
 
 ````{r, results="asis"}
 for(id in pull(TRD_regions, ID)){
-
+    if(!file.exists(paste0("~/data/trd/local_phylogenies_trd_analysis/",
+                cross,".",id,".",strain_1,".","PCA",".RDS"))){
+                next
+                }
     cat("### TRD region ",id, " in strain 1, ", strain_1, "  ")
     cat("\n") 
 print(readRDS(paste0("~/data/trd/local_phylogenies_trd_analysis/",
@@ -299,3 +305,157 @@ print(readRDS(paste0("~/data/trd/local_phylogenies_trd_analysis/",
 ## Changes in the local phylogeny
 
 - needs to be re-analyzed as basically all TRD regions were low outliers, implying that the 50 kB region size of the random regions determined more changes than the often larger TRD regions.
+
+
+# Population genomics
+
+## Nucleotide diversity
+
+````{r, results="asis"}
+for(id in pull(TRD_regions, ID)){
+    if(!file.exists(paste0("/home/jnrunge/data/trd/pop_genomics/",cross,".",id,"-relative-measures.RDS"))){
+    next
+    }
+    rel_measures<-readRDS(paste0("/home/jnrunge/data/trd/pop_genomics/",cross,".",id,"-relative-measures.RDS"))
+    cat("### TRD region ",id)
+    cat("\n") 
+    cat(paste0("The distorter-like strains have a pi of ", rel_measures$pi_distorter$pi_pop, " in the TRD region. That is the ", 
+    rel_measures$pi_distorter$ecdf_value, " percentile, or a move of ", rel_measures$pi_distorter$standardized_measure, " SD from the mean, compared to the average of the distorters-like strains genome-wide."))
+    cat("\n")
+    cat(paste0("The other strains have a pi of ", rel_measures$pi_other$pi_pop, " in the TRD region. That is the ", 
+    rel_measures$pi_other$ecdf_value, " percentile, or a move of ", rel_measures$pi_other$standardized_measure, " SD from the mean, compared to the average of the distorters-like strains genome-wide."))
+    cat("\n")
+    print(readRDS(paste0("/home/jnrunge/data/trd/pop_genomics/",cross,".",id,"-pi-plot.RDS")))
+    cat("\n")
+    cat("\n")
+     
+}
+
+
+````
+
+## Fst
+
+````{r, results="asis"}
+for(id in pull(TRD_regions, ID)){
+if(!file.exists(paste0("/home/jnrunge/data/trd/pop_genomics/",cross,".",id,"-relative-measures.RDS"))){
+    next
+    }
+    rel_measures<-readRDS(paste0("/home/jnrunge/data/trd/pop_genomics/",cross,".",id,"-relative-measures.RDS"))
+    cat("### TRD region ",id)
+    cat("\n") 
+    cat(paste0("The population differentiation of distorter-like and other strains at the TRD locus is ", rel_measures$fst$sum_value, ". That is the ", 
+    rel_measures$fst$ecdf_value, " percentile, or a move of ", rel_measures$fst$standardized_measure, " SD from the mean, compared to the average genome-wide."))
+    cat("\n")
+    print(readRDS(paste0("/home/jnrunge/data/trd/pop_genomics/",cross,".",id,"-Fst-plot.RDS")))
+    cat("\n")
+     cat("\n")
+}
+
+
+````
+
+## Dxy
+
+````{r, results="asis"}
+for(id in pull(TRD_regions, ID)){
+if(!file.exists(paste0("/home/jnrunge/data/trd/pop_genomics/",cross,".",id,"-relative-measures.RDS"))){
+    next
+    }
+    rel_measures<-readRDS(paste0("/home/jnrunge/data/trd/pop_genomics/",cross,".",id,"-relative-measures.RDS"))
+    cat("### TRD region ",id)
+    cat("\n") 
+    cat(paste0("The nucleotide divergence of distorter-like and other strains at the TRD locus is ", rel_measures$dxy$sum_value, ". That is the ", 
+    rel_measures$dxy$ecdf_value, " percentile, or a move of ", rel_measures$dxy$standardized_measure, " SD from the mean, compared to the average genome-wide."))
+    cat("\n")
+    print(readRDS(paste0("/home/jnrunge/data/trd/pop_genomics/",cross,".",id,"-Dxy-plot.RDS")))
+    cat("\n")
+     cat("\n")
+}
+
+
+````
+
+
+## Tajima's D
+
+To understand whether the TRD region is showing signals of selection across all strains, I also calculated Tajima's D. *Note that this is not on a subset of e.g. distorter-like strains, but across all strains of the 2.5K matrix.*
+
+````{r, results="asis"}
+TD_values<-fread("/home/jnrunge/data/trd/TD_data/TD_plot_data.csv.gz")
+cross_value<-cross
+for(id in pull(TRD_regions, ID)){
+    TD_values_slice<-filter(TD_values, cross==cross_value, ID==id)
+    cat("### TRD region ",id)
+    cat("\n") 
+    cat(paste0("The TD value in the TRD region across all strains is ", pull(TD_values_slice, TD), ", which represents a percentile of ",
+    pull(TD_values_slice, TD_ecdf), " and an SD shift of ", pull(TD_values_slice, TD_sd_multi)))
+     cat("\n") 
+    print(readRDS(paste0("/home/jnrunge/data/trd/TD_data","/",cross,".", id,".",
+                     "TD_plot",".RDS")))
+     cat("\n") 
+      cat("\n") 
+
+}
+````
+
+## Linkage disequillibrium
+
+Another important hint could be linkage disequillibrium, which I have also calculated across all strains. *Note that this is not on a subset of e.g. distorter-like strains, but across all strains of the 2.5K matrix.*
+
+````{r, results="asis"}
+LD_values<-fread("/home/jnrunge/data/trd/LD_data/LD_plot_data.csv.gz")
+cross_value<-cross
+for(id in pull(TRD_regions, ID)){
+    LD_values_slice<-filter(LD_values, cross==cross_value, ID==id)
+    cat("### TRD region ",id)
+    cat("\n") 
+    cat(paste0("The LD value in the TRD region across all strains is ", pull(LD_values_slice, LD), " (R^2), which represents a percentile an SD shift of ", pull(LD_values_slice, LD_sd_multi_1), " compared to the lower-value group and a shift of ", pull(LD_values_slice, LD_sd_multi_2), " compared to the higher value group (LD is bimodally distributed)"))
+     cat("\n") 
+    print(readRDS(paste0("/home/jnrunge/data/trd/LD_data","/",cross,".", id,".",
+                     "LD_plot",".RDS")))
+     cat("\n") 
+      cat("\n") 
+
+}
+````
+
+
+# Positioning of genomic signals among other strains
+
+To investigate whether the TRD regions in this strain are particularly unique among all TRD regions analyzed across strains, 
+
+````{r, results="asis"}
+cross_value<-cross
+pca_df<-readRDS("~/data/trd/genomic_signals_pca.RDS")
+pca_df<-mutate(pca_df, ID_thiscross=ifelse(cross==cross_value, ID, NA))
+print(ggplot(pca_df,
+      aes(PC1,PC2,color=cross==cross_value))+
+geom_point()+geom_label(mapping=aes(label=ID_thiscross)))
+
+
+````
+
+
+
+# GO terms
+
+
+````{r, results="asis"}
+
+for(id in pull(TRD_regions, ID)){
+    cat("## TRD region ",id)
+    cat("\n") 
+
+    GO_data<-readRDS(paste0("/home/jnrunge/data/trd/GO_data","/",cross, ".", id, ".reducedTerms.RDS"))
+    
+    treemapPlot(GO_data)
+     cat("\n") 
+    wordcloudPlot(GO_data, min.freq=1, colors="black")
+
+ cat("\n")  
+ cat("\n") 
+
+}
+
+````
