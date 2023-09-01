@@ -100,6 +100,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <script src="Draft_files/libs/quarto-contrib/glightbox/glightbox.min.js"></script>
 <link href="Draft_files/libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
 <link href="Draft_files/libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
@@ -116,6 +119,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <li><a href="#results" id="toc-results" class="nav-link active" data-scroll-target="#results">Results</a>
   <ul class="collapse">
   <li><a href="#transmission-distortion-is-common" id="toc-transmission-distortion-is-common" class="nav-link" data-scroll-target="#transmission-distortion-is-common">Transmission distortion is common</a></li>
+  <li><a href="#distorted-regions-show-signals-of-selection" id="toc-distorted-regions-show-signals-of-selection" class="nav-link" data-scroll-target="#distorted-regions-show-signals-of-selection">Distorted regions show signals of selection</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -158,18 +162,146 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>sd_colonies<span class="ot">&lt;-</span><span class="fu">summarize</span>(Crosses_xlsx, <span class="fu">sd</span>(<span class="st">`</span><span class="at">Colonies in pool</span><span class="st">`</span>, <span class="at">na.rm=</span><span class="cn">TRUE</span>))<span class="sc">%&gt;%</span><span class="fu">pull</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<p>We conducted 34 crosses, of which 30 were succesful, with on average 1419 <span class="math inline">\(\pm\)</span> 736 (SD) colonies retreived per cross.</p>
+<div class="cell" data-tags="[]" data-execution_count="3">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load table with summarizes stats for all TRD regions</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>One_Table<span class="ot">&lt;-</span><span class="fu">read_csv</span>(<span class="st">"03_GenomicSignals/03_OneTable.csv.gz"</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>One_Table<span class="ot">&lt;-</span><span class="fu">filter</span>(One_Table, <span class="sc">!</span><span class="fu">is.na</span>(AF))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
 <div class="cell" data-tags="[]" data-execution_count="4">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(Crosses_xlsx, <span class="fu">aes</span>(<span class="st">`</span><span class="at">Colonies in pool</span><span class="st">`</span>))<span class="sc">+</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_histogram</span>()<span class="sc">+</span><span class="fu">theme_bw</span>(<span class="dv">20</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># How common is TRD?</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>nCrossesWithTRD<span class="ot">&lt;-</span><span class="fu">summarize</span>(One_Table, <span class="at">nCrosses=</span><span class="fu">length</span>(<span class="fu">unique</span>(cross)))<span class="sc">%&gt;%</span><span class="fu">pull</span>()</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Strength of TRD</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># why NAs?</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>AF_summary<span class="ot">&lt;-</span><span class="fu">summarize</span>(One_Table, <span class="at">meanAF=</span><span class="fu">mean</span>(<span class="fu">abs</span>(AF<span class="fl">-0.5</span>)<span class="sc">+</span><span class="fl">0.5</span>, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>                     <span class="at">sdAF=</span><span class="fu">sd</span>(<span class="fu">abs</span>(AF<span class="fl">-0.5</span>)<span class="sc">+</span><span class="fl">0.5</span>, <span class="at">na.rm=</span><span class="cn">TRUE</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div class="cell" data-tags="[]" data-execution_count="5">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># How many TRD per cross?</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>TRD_summary<span class="ot">&lt;-</span><span class="fu">group_by</span>(One_Table, cross)<span class="sc">%&gt;%</span><span class="fu">summarize</span>(<span class="at">n=</span><span class="fu">n</span>(), <span class="at">nUp=</span><span class="fu">sum</span>(AF<span class="sc">&gt;</span><span class="fl">0.5</span>), <span class="at">OnlyOneDirection=</span>nUp<span class="sc">==</span>n)<span class="sc">%&gt;%</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summarize</span>(<span class="at">meanN=</span><span class="fu">mean</span>(n), <span class="at">sdN=</span><span class="fu">sd</span>(n), <span class="at">OnlyOneDirection=</span><span class="fu">sum</span>(OnlyOneDirection)<span class="sc">/</span><span class="fu">n</span>())</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>TRD_summary</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+
+<table class="dataframe table table-sm table-striped">
+<caption>A tibble: 1 x 3</caption>
+<thead>
+    <tr><th scope="col">meanN</th><th scope="col">sdN</th><th scope="col">OnlyOneDirection</th></tr>
+    <tr><th scope="col">&lt;dbl&gt;</th><th scope="col">&lt;dbl&gt;</th><th scope="col">&lt;dbl&gt;</th></tr>
+</thead>
+<tbody>
+    <tr><td>3.6875</td><td>5.578978</td><td>0.34375</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>We conducted 34 crosses, of which 30 were succesful, with on average 1419 <span class="math inline">\(\pm\)</span> 736 (SD) colonies retreived per cross.Combined with an additional 8 crosses from a preliminary study, we find that out of 38 crosses, 32 or 84 % show regions under TRD.On average, transmissions were distorted to allele frequencies of 70% <span class="math inline">\(\pm\)</span> 11 as opposed to the expected 50%. Crosses with TRD, had on average 3.69 <span class="math inline">\(\pm\)</span> 5.58 regions under distortion. 34.38 % of crosses with TRD only had distortion in one direction.</p>
+<div class="cell" data-tags="[]" data-execution_count="7">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(Crosses_xlsx, <span class="fu">aes</span>(<span class="st">`</span><span class="at">Colonies in pool</span><span class="st">`</span>))<span class="sc">+</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_histogram</span>()<span class="sc">+</span><span class="fu">theme_bw</span>(<span class="dv">20</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
 <div id="fig-colonies" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><a href="Draft_files/figure-html/fig-colonies-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Distribution of the number of colonies that were retrieved per cross"><img src="Draft_files/figure-html/fig-colonies-output-1.png" class="img-fluid figure-img"></a></p>
 <p></p><figcaption class="figure-caption">Figure&nbsp;1: Distribution of the number of colonies that were retrieved per cross</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell" data-tags="[]" data-execution_count="8">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(One_Table, <span class="fu">aes</span>(<span class="fu">abs</span>(AF<span class="fl">-0.5</span>)<span class="sc">+</span><span class="fl">0.5</span>))<span class="sc">+</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_histogram</span>()<span class="sc">+</span><span class="fu">theme_bw</span>(<span class="dv">20</span>)<span class="sc">+</span><span class="fu">xlab</span>(<span class="st">"Allele frequency of TRD region"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="fig-af" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><a href="Draft_files/figure-html/fig-af-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Distribution of allele frequencies of those regions classified as under distortion"><img src="Draft_files/figure-html/fig-af-output-1.png" class="img-fluid figure-img"></a></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;2: Distribution of allele frequencies of those regions classified as under distortion</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="distorted-regions-show-signals-of-selection" class="level2">
+<h2 class="anchored" data-anchor-id="distorted-regions-show-signals-of-selection">Distorted regions show signals of selection</h2>
+<div class="cell" data-tags="[]" data-execution_count="9">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>One_Table_sd_based_values<span class="ot">&lt;-</span>One_Table<span class="sc">%&gt;%</span><span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"sd|standardized"</span>))<span class="sc">%&gt;%</span><span class="fu">select</span>(<span class="sc">!</span><span class="fu">matches</span>(<span class="st">"multiplier_[12]"</span>))<span class="sc">%&gt;%</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">select</span>(<span class="sc">-</span>LD_sd_multi_2)<span class="sc">%&gt;%</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rename</span>(<span class="st">`</span><span class="at">IBS distance from other strains, distorter</span><span class="st">`</span><span class="ot">=</span>IBS_eucldist_sd_multiplier_distorter,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">IBS distance from other strains, other</span><span class="st">`</span><span class="ot">=</span>IBS_eucldist_sd_multiplier_other,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LD TRD region species-wide</span><span class="st">`</span><span class="ot">=</span>LD_sd_multi_1,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>       <span class="st">`</span><span class="at">PCA distance from other strains, distorter</span><span class="st">`</span><span class="ot">=</span>PCA_eucldist_sd_multiplier_distorter,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>       <span class="st">`</span><span class="at">PCA distance from other strains, other</span><span class="st">`</span><span class="ot">=</span>PCA_eucldist_sd_multiplier_other,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>       <span class="st">`</span><span class="at">Tajima's D TRD region species-wide</span><span class="st">`</span><span class="ot">=</span>TD_sd_multi,</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>       <span class="st">`</span><span class="at">Dxy distorter-like vs all other strains</span><span class="st">`</span><span class="ot">=</span>standardized_measure_dxy,</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>       <span class="st">`</span><span class="at">Fst distorter-like vs all other strains</span><span class="st">`</span><span class="ot">=</span>standardized_measure_fst,</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>       <span class="st">`</span><span class="at">Pi within distorter-like strains</span><span class="st">`</span><span class="ot">=</span>standardized_measure_pi_distorter,</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>       <span class="st">`</span><span class="at">Pi within other strains</span><span class="st">`</span><span class="ot">=</span>standardized_measure_pi_other,</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>       <span class="st">`</span><span class="at">Distance TRD locus phylogeny to genome-wide (broken)</span><span class="st">`</span><span class="ot">=</span>tree_changes_sd_multiplier)<span class="sc">%&gt;%</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="fu">pivot_longer</span>(<span class="at">cols=</span><span class="fu">everything</span>())<span class="sc">%&gt;%</span><span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(value))</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>One_Table_sd_based_values_means<span class="ot">&lt;-</span>One_Table_sd_based_values<span class="sc">%&gt;%</span><span class="fu">group_by</span>(name)<span class="sc">%&gt;%</span><span class="fu">summarize</span>(<span class="at">mean=</span><span class="fu">mean</span>(value),</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>                                                                                       <span class="at">ttest_p_value=</span><span class="fu">t.test</span>(value,</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>                                                                                                           <span class="at">mu=</span><span class="dv">0</span>)<span class="sc">$</span>p.value)</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>One_Table_sd_based_values_means</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+
+<table class="dataframe table table-sm table-striped">
+<caption>A tibble: 11 x 3</caption>
+<thead>
+    <tr><th scope="col">name</th><th scope="col">mean</th><th scope="col">ttest_p_value</th></tr>
+    <tr><th scope="col">&lt;chr&gt;</th><th scope="col">&lt;dbl&gt;</th><th scope="col">&lt;dbl&gt;</th></tr>
+</thead>
+<tbody>
+    <tr><td>Distance TRD locus phylogeny to genome-wide (broken)</td><td>-10.67188584</td><td>4.167297e-117</td></tr>
+    <tr><td>Dxy distorter-like vs all other strains             </td><td> -0.03144709</td><td> 1.280569e-02</td></tr>
+    <tr><td>Fst distorter-like vs all other strains             </td><td>  1.27227550</td><td> 4.489771e-02</td></tr>
+    <tr><td>IBS distance from other strains, distorter          </td><td>  0.26708263</td><td> 8.621690e-03</td></tr>
+    <tr><td>IBS distance from other strains, other              </td><td>  0.21568756</td><td> 4.442233e-02</td></tr>
+    <tr><td>LD TRD region species-wide                          </td><td>  2.59480243</td><td> 3.887725e-50</td></tr>
+    <tr><td>PCA distance from other strains, distorter          </td><td>  0.09788984</td><td> 3.298542e-01</td></tr>
+    <tr><td>PCA distance from other strains, other              </td><td>  0.10943295</td><td> 2.338557e-01</td></tr>
+    <tr><td>Pi within distorter-like strains                    </td><td> -0.08047421</td><td> 1.738236e-11</td></tr>
+    <tr><td>Pi within other strains                             </td><td> -0.05276576</td><td> 1.675926e-11</td></tr>
+    <tr><td>Tajima's D TRD region species-wide                  </td><td>  0.12602638</td><td> 8.173508e-02</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell" data-tags="[]" data-execution_count="10">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(One_Table_sd_based_values,</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>      <span class="fu">aes</span>(value,<span class="at">fill=</span>name))<span class="sc">+</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_histogram</span>()<span class="sc">+</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co">#facet_wrap(~name, scales="free")+</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_vline</span>(<span class="at">xintercept=</span><span class="dv">0</span>)<span class="sc">+</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_vline</span>(<span class="at">data=</span>One_Table_sd_based_values_means, <span class="fu">aes</span>(<span class="at">xintercept=</span>mean), <span class="at">color=</span><span class="st">"red"</span>)<span class="sc">+</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_bw</span>(<span class="dv">20</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="fig-signals-distributions" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><a href="Draft_files/figure-html/fig-signals-distributions-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Distribution of genomic signals at TRD regions. All values are compared to the averages across the genome and given in SD distance to the mean, i.e.&nbsp;a value of 1 indicates that the respective TRD region has a one SD greater value than the average genome-wide."><img src="Draft_files/figure-html/fig-signals-distributions-output-1.png" class="img-fluid figure-img"></a></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;3: Distribution of genomic signals at TRD regions. All values are compared to the averages across the genome and given in SD distance to the mean, i.e.&nbsp;a value of 1 indicates that the respective TRD region has a one SD greater value than the average genome-wide.</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -313,7 +445,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
-<script>var lightboxQuarto = GLightbox({"selector":".lightbox","openEffect":"zoom","descPosition":"bottom","loop":true,"closeEffect":"zoom"});</script>
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","openEffect":"zoom","loop":true,"descPosition":"bottom","selector":".lightbox"});</script>
 
 
 

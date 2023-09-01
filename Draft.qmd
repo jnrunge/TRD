@@ -34,10 +34,40 @@ sd_colonies<-summarize(Crosses_xlsx, sd(`Colonies in pool`, na.rm=TRUE))%>%pull(
 ```
 
 ```{r}
+#| tags: []
+# Load table with summarizes stats for all TRD regions
+One_Table<-read_csv("03_GenomicSignals/03_OneTable.csv.gz")
+One_Table<-filter(One_Table, !is.na(AF))
+```
+
+```{r}
+#| tags: []
+# How common is TRD?
+nCrossesWithTRD<-summarize(One_Table, nCrosses=length(unique(cross)))%>%pull()
+
+# Strength of TRD
+# why NAs?
+AF_summary<-summarize(One_Table, meanAF=mean(abs(AF-0.5)+0.5, na.rm=TRUE),
+                     sdAF=sd(abs(AF-0.5)+0.5, na.rm=TRUE))
+```
+
+```{r}
+#| tags: []
+# How many TRD per cross?
+TRD_summary<-group_by(One_Table, cross)%>%summarize(n=n(), nUp=sum(AF>0.5), OnlyOneDirection=nUp==n)%>%
+summarize(meanN=mean(n), sdN=sd(n), OnlyOneDirection=sum(OnlyOneDirection)/n())
+TRD_summary
+```
+
+```{r}
 #| output: asis
 #| echo: false
 #| tags: []
-cat("We conducted 34 crosses, of which 30 were succesful, with on average",round(mean_colonies),"$\\pm$",round(sd_colonies), "(SD) colonies retreived per cross.\n")
+cat("We conducted 34 crosses, of which 30 were succesful, with on average",round(mean_colonies),"$\\pm$",round(sd_colonies), "(SD) colonies retreived per cross.")
+cat("Combined with an additional 8 crosses from a preliminary study, we find that out of 38 crosses,",nCrossesWithTRD,"or",round(nCrossesWithTRD/38*100),"% show regions under TRD.")
+cat("On average, transmissions were distorted to allele frequencies of",paste0(round(100*pull(AF_summary, meanAF)),"%"),"$\\pm$",paste0(round(100*pull(AF_summary, sdAF))),"as opposed to the expected 50%. ")
+cat("Crosses with TRD, had on average",round(pull(TRD_summary, meanN),2),"$\\pm$",round(pull(TRD_summary, sdN),2),"regions under distortion.",
+   round(pull(TRD_summary, OnlyOneDirection)*100,2),"% of crosses with TRD only had distortion in one direction.")
 ```
 
 ```{r}
@@ -49,4 +79,53 @@ ggplot(Crosses_xlsx, aes(`Colonies in pool`))+
 geom_histogram()+theme_bw(20)
 ```
 
+```{r}
+#| label: fig-AF
+#| fig-cap: Distribution of allele frequencies of those regions classified as under distortion
+#| tags: []
+
+ggplot(One_Table, aes(abs(AF-0.5)+0.5))+
+geom_histogram()+theme_bw(20)+xlab("Allele frequency of TRD region")
+```
+
+## Distorted regions show signals of selection
+
+```{r}
+#| tags: []
+One_Table_sd_based_values<-One_Table%>%select(matches("sd|standardized"))%>%select(!matches("multiplier_[12]"))%>%
+select(-LD_sd_multi_2)%>%
+rename(`IBS distance from other strains, distorter`=IBS_eucldist_sd_multiplier_distorter,
+      `IBS distance from other strains, other`=IBS_eucldist_sd_multiplier_other,
+      `LD TRD region species-wide`=LD_sd_multi_1,
+       `PCA distance from other strains, distorter`=PCA_eucldist_sd_multiplier_distorter,
+       `PCA distance from other strains, other`=PCA_eucldist_sd_multiplier_other,
+       `Tajima's D TRD region species-wide`=TD_sd_multi,
+       `Dxy distorter-like vs all other strains`=standardized_measure_dxy,
+       `Fst distorter-like vs all other strains`=standardized_measure_fst,
+       `Pi within distorter-like strains`=standardized_measure_pi_distorter,
+       `Pi within other strains`=standardized_measure_pi_other,
+       `Distance TRD locus phylogeny to genome-wide (broken)`=tree_changes_sd_multiplier)%>%
+pivot_longer(cols=everything())%>%filter(!is.na(value))
+
+One_Table_sd_based_values_means<-One_Table_sd_based_values%>%group_by(name)%>%summarize(mean=mean(value),
+                                                                                       ttest_p_value=t.test(value,
+                                                                                                           mu=0)$p.value)
+
+One_Table_sd_based_values_means
+```
+
+```{r}
+#| label: fig-signals-distributions
+#| fig-cap: 'Distribution of genomic signals at TRD regions. All values are compared to the averages across the genome and given in SD distance to the mean, i.e. a value of 1 indicates that the respective TRD region has a one SD greater value than the average genome-wide.'
+#| tags: []
+
+
+ggplot(One_Table_sd_based_values,
+      aes(value,fill=name))+
+geom_histogram()+
+#facet_wrap(~name, scales="free")+
+geom_vline(xintercept=0)+
+geom_vline(data=One_Table_sd_based_values_means, aes(xintercept=mean), color="red")+
+theme_bw(20)
+```
 

@@ -446,6 +446,10 @@ geom_point()+geom_label(mapping=aes(label=ID_thiscross)))
 for(id in pull(TRD_regions, ID)){
     cat("## TRD region ",id)
     cat("\n") 
+    
+    if(!file.exists(paste0("/home/jnrunge/data/trd/GO_data","/",cross, ".", id, ".reducedTerms.RDS"))){
+    next
+    }
 
     GO_data<-readRDS(paste0("/home/jnrunge/data/trd/GO_data","/",cross, ".", id, ".reducedTerms.RDS"))
     
