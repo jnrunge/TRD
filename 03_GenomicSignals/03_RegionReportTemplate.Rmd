@@ -18,10 +18,15 @@ library(naturalsort)
 library(scales)
 library(stringr)
 
+
 AF_across_genome<-fread(paste0("~/data/TRD/results/shiny/", cross, "-AF.csv.gz"))
+cross_value<-cross
+
+One_Table_this_cross<-fread("03_OneTable.csv.gz")%>%filter(cross==cross_value) # will be used for filtering
+
 
 TRD_regions<-fread(paste0("~/data/TRD/results/shiny/", cross, "-TRD_regions.csv.gz"))
-
+TRD_regions<-filter(TRD_regions,ID%in%pull(One_Table_this_cross,ID))
 
 
 ````
@@ -78,7 +83,7 @@ The parental strains had an allele sharing distance of `r ASD_value`, which I th
 
 # TRD across genome
 
-````{r}
+````{r fig.width=10,fig.height=6}
 
 # code below from TRD/02_TRD/01_getTRDs-GATK.R
 
@@ -179,7 +184,9 @@ It is worth noting here that the sizes of SVs can be quite different between the
 "TRD" regions added as well.
 
 ````{r, fig.height=8, eval=!is.na(sv_plots[["sv_victor"]])} 
-sv_plots[["sv_victor"]]+theme_bw(12)
+
+sv_plots[["sv_victor"]]+geom_segment(data=select(One_Table,chr,start,end)%>%rename(`#CHROM`=chr,POS=start,END=end)%>%mutate(sample="TRD",TYPE="TRD"), size=5)
+
 ````
 
 
@@ -189,6 +196,8 @@ sv_plots[["sv_victor"]]+theme_bw(12)
 
 SV_data<-readRDS(paste0("/home/jnrunge/data/trd/SV_analysis/",cross,
                     ".SV_data.RDS"))
+                    
+SV_data<-mutate(SV_data, ID=as.character(ID))
                     
 for(ci in unique(paste0(pull(SV_data, cross), "_",
                      pull(SV_data, ID), "_",
@@ -209,9 +218,13 @@ for(ci in unique(paste0(pull(SV_data, cross), "_",
 
 SV_data_summary<-SV_data%>%filter(!is.na(TYPE))%>%
 group_by(cross,ID,TYPE,source, sample)%>%summarize(sum_LEN_rel=sum(LEN_rel))
-                    
+ 
+ SV_data_summary<-filter(SV_data_summary, paste(cross,ID)%in% paste(pull(One_Table, cross), pull(One_Table, ID)))
+ 
 reactable(SV_data_summary%>%group_by(cross,ID,TYPE)%>%summarize(LEN_rel_diff_abs=abs(sum_LEN_rel[1]-sum_LEN_rel[2]))
 %>%arrange(-LEN_rel_diff_abs))
+
+````
 
 ## Dotplots
 
@@ -240,11 +253,14 @@ LP_data<-fread("/home/jnrunge/data/trd/local_phylogenies_trd_analysis/TRD_region
 
 cross_val<-cross
 
+LP_data<-filter(LP_data, paste(cross,ID)%in% paste(pull(One_Table, cross), pull(One_Table, ID)))
+
 LP_data<-filter(LP_data,cross==cross_val)%>%select(ID,PCA_eucldist_quantile_1,PCA_eucldist_sd_multiplier_1,IBS_eucldist_quantile_1,IBS_eucldist_sd_multiplier_1,tree_changes_quantile,tree_changes_sd_multiplier,PCA_eucldist_quantile_2,PCA_eucldist_sd_multiplier_2,IBS_eucldist_quantile_2,IBS_eucldist_sd_multiplier_2)
 
 LP_data<-pivot_longer(LP_data, -ID)
 
 LP_data<-mutate(LP_data, value=round(value,2), abs=round(abs(value),2))
+
 
 reactable(LP_data%>%arrange(-abs))
 
