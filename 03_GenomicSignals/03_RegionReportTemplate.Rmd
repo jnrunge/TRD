@@ -83,7 +83,7 @@ The parental strains had an allele sharing distance of `r ASD_value`, which I th
 
 # TRD across genome
 
-````{r fig.width=10,fig.height=6}
+````{r}
 
 # code below from TRD/02_TRD/01_getTRDs-GATK.R
 
@@ -134,7 +134,7 @@ for(i in 1:nrow(TRD_regions)){
   
 ````
 
-````{r}
+````{r, fig.width=10, fig.height=6}
 
 p
 
@@ -185,7 +185,9 @@ It is worth noting here that the sizes of SVs can be quite different between the
 
 ````{r, fig.height=8, eval=!is.na(sv_plots[["sv_victor"]])} 
 
-sv_plots[["sv_victor"]]+geom_segment(data=select(One_Table,chr,start,end)%>%rename(`#CHROM`=chr,POS=start,END=end)%>%mutate(sample="TRD",TYPE="TRD"), size=5)
+#One_Table_this_cross<-One_Table_this_cross%>%mutate(`#CHROM` = fct_relevel(chr, naturalsort(unique(pull(AF_across_genome,chr)))))
+
+sv_plots[["sv_victor"]]+geom_segment(data=select(One_Table_this_cross,chr,start,end)%>%rename(`#CHROM`=chr,POS=start,END=end)%>%mutate(sample="TRD",TYPE="TRD"), size=5)+theme_bw(12)
 
 ````
 
@@ -249,13 +251,10 @@ sv_plots[["mash2"]]+theme_bw(12)
 
 ````{r}
 
-LP_data<-fread("/home/jnrunge/data/trd/local_phylogenies_trd_analysis/TRD_regions_with_LP_data.csv.gz")
+LP_data<-One_Table_this_cross
 
-cross_val<-cross
 
-LP_data<-filter(LP_data, paste(cross,ID)%in% paste(pull(One_Table, cross), pull(One_Table, ID)))
-
-LP_data<-filter(LP_data,cross==cross_val)%>%select(ID,PCA_eucldist_quantile_1,PCA_eucldist_sd_multiplier_1,IBS_eucldist_quantile_1,IBS_eucldist_sd_multiplier_1,tree_changes_quantile,tree_changes_sd_multiplier,PCA_eucldist_quantile_2,PCA_eucldist_sd_multiplier_2,IBS_eucldist_quantile_2,IBS_eucldist_sd_multiplier_2)
+LP_data<-filter(LP_data,cross==cross_val)%>%select(ID,PCA_eucldist_quantile_1,PCA_eucldist_sd_multiplier_1,IBS_eucldist_quantile_1,IBS_eucldist_sd_multiplier_1,tree_changes_sd_multiplier,PCA_eucldist_quantile_2,PCA_eucldist_sd_multiplier_2,IBS_eucldist_quantile_2,IBS_eucldist_sd_multiplier_2)
 
 LP_data<-pivot_longer(LP_data, -ID)
 
