@@ -17,3 +17,5 @@ unnamed-chunk*
 *.css
 *.js
 *.woff
+**/*.keras
+**/*.HTML

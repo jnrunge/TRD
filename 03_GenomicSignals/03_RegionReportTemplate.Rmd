@@ -37,14 +37,7 @@ TRD_regions<-filter(TRD_regions,ID%in%pull(One_Table_this_cross,ID))
 
 # load the Excel crosses file
 
-crosses_xlsx=readxl::read_xlsx("~/data/trd/Crosses.xlsx", sheet=2)
-cc=data.frame("Cross ID"=c(paste0("ChrisC",1:8)),
-                                  "Short name 1"=c("ACP","BAP","CCD","ATE","ACK","AKE","BAH","ANG"),
-                                  "Short name 2"=c("BFP","CMP","CPG","SACE_YCR","ACV","BAH","CGD","CEI"), stringsAsFactors=FALSE)
-colnames(cc)=str_replace_all(colnames(cc), fixed("."), " ")
-crosses_all <- bind_rows(crosses_xlsx[,c("Cross ID","Short name 1","Short name 2")],
-                        cc)
-                        
+source("../LoadCrosses.r")
 crosses_all_slice<-filter(crosses_all, `Cross ID` == cross)
 strain_1<-pull(crosses_all_slice, `Short name 1`)
 strain_2<-pull(crosses_all_slice, `Short name 2`)
@@ -254,7 +247,7 @@ sv_plots[["mash2"]]+theme_bw(12)
 LP_data<-One_Table_this_cross
 
 
-LP_data<-filter(LP_data,cross==cross_val)%>%select(ID,PCA_eucldist_quantile_1,PCA_eucldist_sd_multiplier_1,IBS_eucldist_quantile_1,IBS_eucldist_sd_multiplier_1,tree_changes_sd_multiplier,PCA_eucldist_quantile_2,PCA_eucldist_sd_multiplier_2,IBS_eucldist_quantile_2,IBS_eucldist_sd_multiplier_2)
+LP_data<-select(LP_data,ID,PCA_eucldist_quantile_distorter,PCA_eucldist_sd_multiplier_distorter,IBS_eucldist_quantile_distorter,IBS_eucldist_sd_multiplier_distorter,tree_changes_sd_multiplier,PCA_eucldist_quantile_other,PCA_eucldist_sd_multiplier_other,IBS_eucldist_quantile_other,IBS_eucldist_sd_multiplier_other)
 
 LP_data<-pivot_longer(LP_data, -ID)
 
@@ -328,6 +321,30 @@ print(readRDS(paste0("~/data/trd/local_phylogenies_trd_analysis/",
 
 - needs to be re-analyzed as basically all TRD regions were low outliers, implying that the 50 kB region size of the random regions determined more changes than the often larger TRD regions.
 
+````{r, results="asis"}
+# because the calculation is somehow faulty in the 02_LOcalPhy, I am re-doing it in here so that the result can be visualized
+# note that the result itself is correct after 03_PutItAllTogether, but the distribution needs to be plotted, because the plot from
+# 02-LP contains the wrong red line
+
+random_data<-fread("/home/jnrunge/data/trd/local_phylogenies_random_tree_data_distances.csv.gz") # from 02_Local-Phy
+
+tree_distance_length_model <- lm(tree_distance ~ log(lengthbp),random_data)
+
+for(id in pull(TRD_regions, ID)){
+    cat("### TRD region ",id)
+    cat("\n") 
+    print(ggplot(data.frame(tree_distances = tree_distance_length_model$residuals), aes(x = tree_distances)) +
+      geom_histogram(aes(y = after_stat(density)), bins = 30) +
+      geom_vline(xintercept = filter(One_Table_this_cross, ID==id)%>%pull(tree_changes_sd_multiplier), color = "red") +
+      stat_function(
+        fun = dnorm, 
+        args = list(mean = mean(tree_distance_length_model$residuals), sd = sd(tree_distance_length_model$residuals)), 
+        color = "blue"
+      )+theme_bw(base_size=18)+xlab("Residual topological distance (w/ branch lengths), normalized")+ylab(NULL)+ggtitle("Local vs global phylogeny"))
+      cat("\n\n") 
+}
+
+````
 
 # Population genomics
 
@@ -462,11 +479,13 @@ geom_point()+geom_label(mapping=aes(label=ID_thiscross)))
 
 # GO terms
 
+## Enriched at region
+
 
 ````{r, results="asis"}
 
 for(id in pull(TRD_regions, ID)){
-    cat("## TRD region ",id)
+    cat("### TRD region ",id)
     cat("\n") 
     
     if(!file.exists(paste0("/home/jnrunge/data/trd/GO_data","/",cross, ".", id, ".reducedTerms.RDS"))){
@@ -478,6 +497,65 @@ for(id in pull(TRD_regions, ID)){
     treemapPlot(GO_data)
      cat("\n") 
     wordcloudPlot(GO_data, min.freq=1, colors="black")
+
+ cat("\n")  
+ cat("\n") 
+
+}
+
+````
+
+## All* in region
+
+It is not quite all because there is a threshold set, but not as strict... (?)
+
+````{r, results="asis"}
+
+for(id in pull(TRD_regions, ID)){
+    cat("### TRD region ",id)
+    cat("\n") 
+    
+    if(!file.exists(paste0("/home/jnrunge/data/trd/GO_data","/",cross, ".", id, ".GOdata.RDS"))){
+    cat("GOData not found")
+    next
+    }
+
+    GO_data<-readRDS(paste0("/home/jnrunge/data/trd/GO_data","/",cross, ".", id, ".GOdata.RDS"))
+    
+    if(!file.exists(paste0("/home/jnrunge/data/trd/GO_data","/",cross, ".", id, ".reducedTermsNoPFilter.RDS")) || 
+    file.mtime(paste0("/home/jnrunge/data/trd/GO_data","/",cross, ".", id, ".reducedTermsNoPFilter.RDS")) < file.mtime(paste0("/home/jnrunge/data/trd/GO_data","/",cross, ".", id, ".GOdata.RDS"))){
+    
+    
+    
+        simMatrix <- calculateSimMatrix(pull(GO_data, GO),
+                                        orgdb="org.Sc.sgd.db", # yeast Sc 
+                                        ont="BP", # biological processes; could also use CC or MF
+                                        method="Rel")
+
+        if(is.na(simMatrix)){
+        cat("simMatrix NA")
+            next
+        }
+        if(length(simMatrix)==1){
+        cat("simMatrix length 1")
+            next
+        }
+
+        scores <- setNames(-log10(pull(GO_data, pChisq)), pull(GO_data, GO))
+        reducedTerms <- reduceSimMatrix(simMatrix,
+                                        scores,
+                                        threshold=0.7,
+                                        orgdb="org.Sc.sgd.db")
+                                        
+        saveRDS(reducedTerms, paste0("/home/jnrunge/data/trd/GO_data","/",cross, ".", id, ".reducedTermsNoPFilter.RDS"))
+                                        
+                                        }else{
+                                        reducedTerms<-readRDS(paste0("/home/jnrunge/data/trd/GO_data","/",cross, ".", id, ".reducedTermsNoPFilter.RDS"))
+                                        }
+    
+    treemapPlot(reducedTerms)
+     cat("\n") 
+    wordcloudPlot(reducedTerms, min.freq=1, colors="black")
 
  cat("\n")  
  cat("\n") 
