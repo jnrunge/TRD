@@ -8,3 +8,12 @@ ceberlein_data
 figures
 *tex
 sharing.csv.gz
+_extensions/quarto-ext/lightbox/resources/js/glightbox.min.js
+_extensions/quarto-ext/lightbox/_extension.yml
+_extensions/quarto-ext/lightbox/lightbox.css
+_extensions/quarto-ext/lightbox/lightbox.lua
+_extensions/quarto-ext/lightbox/resources/css/glightbox.min.css
+unnamed-chunk*
+*.css
+*.js
+*.woff
