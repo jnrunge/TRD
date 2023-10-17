@@ -5,7 +5,7 @@ library(naturalsort)
 library(scales)
 library(ggtree)
 library(ape)
-library(DT)
+library(data.table)
 source_url('https://raw.githubusercontent.com/jnrunge/general/main/functions.R')
 setwd("~/Documents/GitHub/TRD/Shiny/TRD")
 start=TRUE
@@ -41,8 +41,8 @@ getGFFsubset=function(x, brush_df){
   return(subset(GFF, seqid==brush_df$chr & (start<=brush_df$pos & end>=brush_df$pos)))
 }
 
-prep_df_AS_filtered=function(brush_df,selectSimilarity){
-  df_AS_filtered=df_AS
+prep_df_AS_filtered=function(df_AS_filtered,brush_df,selectSimilarity){
+  df_AS_filtered
   
   #print(head(df_AS_filtered))
   
@@ -72,7 +72,7 @@ df_TRD=getTRD(crosses[1])
 df_cov=getCov(crosses[1])
 df_AS=getAlleleSharing(crosses[1])
 
-df_AS_filtered=prep_df_AS_filtered(data.frame(), 0.7)
+df_AS_filtered=prep_df_AS_filtered(df_AS,data.frame(), 0.7)
 
 data_all=list(df_TRD=df_TRD,df_cov=df_cov,df_AS=df_AS,df_AS_filtered=df_AS_filtered)
 
@@ -141,19 +141,23 @@ ui <- fluidPage(
 # Define server logic ----
 server <- function(input, output) {
   rv <- reactiveValues(choices=NULL)
+  data_all=reactiveValues(df_TRD=df_TRD,
+                          df_cov=df_cov,
+                          df_AS=df_AS,
+                          df_AS_filtered=df_AS_filtered)
   observeEvent(input$select, {
       
       TRD_regions=getTRD_regions(input$select)
       rv$choices=getSelectionForTRDRegions(TRD_regions)
       updateSelectInput(inputId = "selectTRDregion", choices = rv$choices)
-      if(start==FALSE){
-        data_all=reactiveValues(df_TRD=getTRD(input$select),
-                                df_cov=getCov(input$select),
-                                df_AS=getAlleleSharing(input$select),
-                                df_AS_filtered=prep_df_AS_filtered(brushedPoints(df_TRD, input$plot1_brush), input$selectSimilarity))
-      }else{
-        start=FALSE
-      }
+      #if(start==FALSE){
+        data_all$df_TRD=getTRD(input$select)
+        data_all$df_cov=getCov(input$select)
+        data_all$df_AS=getAlleleSharing(input$select)
+        data_all$df_AS_filtered=prep_df_AS_filtered(data_all$df_AS,brushedPoints(data_all$df_TRD, input$plot1_brush), input$selectSimilarity)
+      #}else{
+      #  start=FALSE
+      #}
         
       
       
@@ -162,21 +166,19 @@ server <- function(input, output) {
     
   })
   observeEvent(input$plot1_brush,{
-    data_all$df_AS_filtered = prep_df_AS_filtered(brushedPoints(df_TRD, input$plot1_brush),
+    data_all$df_AS_filtered = prep_df_AS_filtered(data_all$df_AS,brushedPoints(data_all$df_TRD, input$plot1_brush),
                                                   input$selectSimilarity)
   })
-  if(exists("data_all")){
-    df_TRD=data_all$df_TRD
-  }
+  
   output$value <- renderPrint({ summary(df_TRD)})
   ranges <- reactiveValues(x = NULL, y = NULL)
   
   output$plot1 <- renderPlot({
-    if(exists("data_all")){
+    #if(exists("data_all")){
       df_TRD=data_all$df_TRD
-    }
+    #}
     
-    p<-ggplot(df_TRD, aes(global_pos, AD_A1_rel))+
+    p<-ggplot(data_all$df_TRD, aes(global_pos, AD_A1_rel))+
       geom_point(alpha=0.1,color="grey")+geom_line(mapping=aes(global_pos, smoothed, color=abs(0.5-smoothed)), inherit.aes=FALSE, linewidth=2)+
       scale_color_viridis_c(option="A", limits = c(0,0.5))+
       ylim(c(0,1))+geom_hline(yintercept = 0.5)+
@@ -206,7 +208,7 @@ server <- function(input, output) {
     }
     p<-ggplot(df_cov, aes(global_pos,xend=global_pos+999, avg_cov))+
       geom_line(alpha=1,color="darkgrey")+scale_y_log10()+geom_hline(yintercept = mean(df_cov$avg_cov))+
-      geom_vline(xintercept = chrs$global_pos)+theme_bw(16)+ylab("Allele Frequency")+xlab("POS")+theme(legend.position = "none")+
+      geom_vline(xintercept = chrs$global_pos)+theme_bw(16)+xlab("POS")+theme(legend.position = "none")+
       ggtitle("Average coverage")+scale_x_continuous(labels = comma)+
       coord_cartesian(xlim = ranges$x, ylim = ranges$y, expand = FALSE)
     TRD_regions<-getTRD_regions(input$select)
@@ -237,8 +239,7 @@ server <- function(input, output) {
   output$plot_phylo <- renderPlot({
     # group muzst be sorted by tree$tip.label
     
-    data_all$df_AS_filtered = prep_df_AS_filtered(brushedPoints(df_TRD, input$plot1_brush),
-                                                  input$selectSimilarity)
+
     
     df_AS_filtered=data_all$df_AS_filtered$df_AS_filtered
     A1s=data_all$df_AS_filtered$A1s
@@ -258,6 +259,7 @@ server <- function(input, output) {
            branch.length='none', 
            layout='circular',size=0.5)+
       geom_tippoint(aes(color=group,size=group,alpha=group),shape=3)+
+      scale_color_manual(values=c("a1"="purple","a2"="green","none"="white"))+
       scale_size_manual(values=c(10,10,0))+scale_alpha_manual(values=c(1,1,0))
     
     p
@@ -266,9 +268,7 @@ server <- function(input, output) {
   
   output$pop_info<-renderPrint({
     
-    data_all$df_AS_filtered = prep_df_AS_filtered(brushedPoints(df_TRD, input$plot1_brush),
-                                                  input$selectSimilarity)
-    
+
     df_AS_filtered=data_all$df_AS_filtered$df_AS_filtered
     A1s=data_all$df_AS_filtered$A1s
     A2s=data_all$df_AS_filtered$A2s

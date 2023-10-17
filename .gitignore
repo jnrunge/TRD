@@ -19,3 +19,17 @@ unnamed-chunk*
 *.woff
 **/*.keras
 **/*.HTML
+.Rproj.user
+.RData
+.Rhistory
+Shiny/data/ChrisC2-AF.csv.gz.allelesharing.csv.gz
+Shiny/data/ChrisC3-AF.csv.gz.allelesharing.csv.gz
+Shiny/data/ChrisC4-AF.csv.gz.allelesharing.csv.gz
+Shiny/data/ChrisC5-AF.csv.gz.allelesharing.csv.gz
+Shiny/data/ChrisC6-AF.csv.gz.allelesharing.csv.gz
+Shiny/data/ChrisC7-AF.csv.gz.allelesharing.csv.gz
+Shiny/data/ChrisC8-AF.csv.gz.allelesharing.csv.gz
+Shiny/data/YJNRC2-AF.csv.gz.allelesharing.csv.gz
+Shiny/data/YJNRC18-AF.csv.gz.allelesharing.csv.gz
+Shiny/data/YJNRC17-AF.csv.gz.allelesharing.csv.gz
+Shiny/TRD/.Rhistory
